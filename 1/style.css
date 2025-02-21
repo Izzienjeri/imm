@@ -1,0 +1,103 @@
+:root {
+  --primary: #0d6efd;
+  --secondary: #6c757d;
+  --background: #212529;
+  --text: #f8f9fa;
+  --border: #495057;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+h1 {
+  color: var(--text);
+}
+
+.image-placeholder {
+  height: 300px; /* Adjust as needed */
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 0.375rem; /* Bootstrap rounded */
+  overflow: hidden;
+  position: relative; /* For absolute positioning of placeholder icon */
+  margin-bottom: 1rem;
+}
+
+.placeholder-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  color: var(--border);
+}
+
+
+#uploadedImage {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Maintain aspect ratio */
+}
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-secondary {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+  opacity: 0.9; /* Subtle hover effect */
+}
+
+.form-range::-webkit-slider-thumb {
+  background: var(--primary);
+}
+
+.form-range::-moz-range-thumb {
+  background: var(--primary);
+}
+
+.form-range::-ms-thumb {
+  background: var(--primary);
+}
+
+/* Custom file upload button */
+.file-upload-button {
+  background-color: var(--primary);
+  color: var(--text);
+  border: none;
+  padding: 0.375rem 0.75rem; /* Bootstrap button padding */
+  border-radius: 0.375rem; /* Bootstrap rounded */
+  cursor: pointer;
+  display: inline-block; /* For proper alignment */
+}
+
+.file-upload-button:hover {
+  background-color: darken(var(--primary), 10%);
+}
+
+#imageUpload {
+  display: none;
+}
+
+/* Controls */
+.controls {
+  margin-top: 1rem;
+}
+.controls > div{
+  margin-bottom: 5px;
+}
+
+.modal-title, .modal-body{
+  color: var(--background);
+}
