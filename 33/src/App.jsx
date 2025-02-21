@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import "tailwindcss/tailwind.css";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,6 +19,7 @@ import {
 } from "lucide-react";
 import * as Tone from "tone";
 
+// --- Constants ---
 const GRID_SIZE = 20;
 const INITIAL_GAME_SPEED = 100;
 const GAME_SPEED_INCREMENT = 15;
@@ -21,12 +28,74 @@ const INITIAL_DIRECTION = { x: 1, y: 0 };
 const APPLES_PER_LEVEL = 3;
 const STAR_COUNT = 100;
 
+// --- Theme Definition ---
+// Consolidating color definitions for better maintainability
+const theme = {
+  colors: {
+    white: "text-white",
+    black: "text-black",
+    gray500: "bg-gray-500",
+    red500: "text-red-500",
+    red600: "text-red-600",
+    green400: "text-green-400",
+    green500: "text-green-500",
+    indigo200: "bg-indigo-200",
+    indigo400: "ring-indigo-400",
+    indigo500: "bg-indigo-500",
+    indigo600: "text-indigo-600",
+    indigo700: "text-indigo-700",
+    yellow300: "bg-yellow-300",
+    blue400: "from-blue-400",
+    purple500: "to-purple-500",
+    purple600: "to-purple-600",
+    black70: "bg-black/70",
+    white80: "bg-white/80",
+  },
+};
+
+// --- Helper Functions ---
+
+/**
+ * Generates a new food item at a random position on the grid,
+ * ensuring it doesn't overlap with the snake.
+ * @param {number} gridSize - The size of the game grid.
+ * @param {Array<{x: number, y: number}>} snake - The current snake segments.
+ * @returns {{x: number, y: number}} - The coordinates of the new food item.
+ */
+function generateFood(gridSize, snake) {
+  let newFood;
+  do {
+    newFood = {
+      x: Math.floor(Math.random() * gridSize),
+      y: Math.floor(Math.random() * gridSize),
+    };
+  } while (
+    snake.some((segment) => segment.x === newFood.x && segment.y === newFood.y)
+  );
+
+  return newFood;
+}
+
+/**
+ * Checks if the snake's head has collided with its body.
+ * @param {{x: number, y: number}} head - The coordinates of the snake's head.
+ * @param {Array<{x: number, y: number}>} snake - The current snake segments.
+ * @returns {boolean} - True if a collision has occurred, false otherwise.
+ */
+function checkCollision(head, snake) {
+  return snake
+    .slice(1) // Exclude the head from collision check
+    .some((segment) => segment.x === head.x && segment.y === head.y);
+}
+
+// --- Components ---
+
 const Apple = () => (
   <motion.svg
     width="1.5rem"
     height="1.5rem"
     viewBox="0 0 24 24"
-    fill="#F44336"
+    fill="red"
     stroke="none"
     strokeWidth="0"
     strokeLinecap="round"
@@ -34,6 +103,8 @@ const Apple = () => (
     initial={{ scale: 0 }}
     animate={{ scale: 1 }}
     transition={{ duration: 0.2, type: "spring", stiffness: 120 }}
+    alt="Apple"
+    aria-label="Apple"
   >
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
     <path d="M12 4a8 8 0 0 1 8 8" opacity=".2" />
@@ -58,10 +129,35 @@ const Star = React.memo(({ x, y, size }) => (
       width: `${size}px`,
       height: `${size}px`,
     }}
+    aria-hidden="true"
   />
 ));
 
+const SnakeSegment = React.memo(({ isHead, gameOver }) => {
+  const mouthColor = gameOver ? "red" : "white";
+  const mouthClasses = `absolute w-[60%] h-[2px] rounded-full ${
+    gameOver ? "rotate-180" : ""
+  } ${gameOver ? "rounded-b-full" : "rounded-t-full"} ${
+    gameOver ? "bg-red-500" : "bg-white"
+  } top-[60%] left-[20%]`;
+
+  return (
+    <>
+      <div
+        className={`absolute w-1 h-1 rounded-full ${theme.colors.yellow300} top-[20%] left-[20%]`}
+        aria-hidden="true"
+      />
+      <div
+        className={`absolute w-1 h-1 rounded-full ${theme.colors.yellow300} top-[20%] right-[20%]`}
+        aria-hidden="true"
+      />
+      <div className={mouthClasses} aria-hidden="true" />
+    </>
+  );
+});
+
 function App() {
+  // --- State Variables ---
   const [snake, setSnake] = useState(INITIAL_SNAKE);
   const [food, setFood] = useState(() =>
     generateFood(GRID_SIZE, INITIAL_SNAKE)
@@ -78,16 +174,23 @@ function App() {
   const [applesEatenThisLevel, setApplesEatenThisLevel] = useState(0);
   const [gameSpeed, setGameSpeed] = useState(INITIAL_GAME_SPEED);
   const [isPaused, setIsPaused] = useState(false);
+  const [audioStarted, setAudioStarted] = useState(false);
+  const [pauseButtonToggle, setPauseButtonToggle] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  // --- Ref Variables ---
   const gameInterval = useRef(null);
   const appRef = useRef(null);
   const eatSynth = useRef(null);
   const gameOverSynth = useRef(null);
   const hasEaten = useRef(false);
-  const [audioStarted, setAudioStarted] = useState(false);
 
+  // --- Audio Constants ---
   const EAT_NOTE = "C4";
   const GAME_OVER_NOTE = "D3";
   const TONE_DURATION = "16n";
+
+  // --- Audio Effects ---
 
   const startAudioContext = useCallback(() => {
     Tone.start();
@@ -113,6 +216,8 @@ function App() {
     };
   }, [audioStarted]);
 
+  // --- Star Generation Effects ---
+
   const generateStars = useCallback(() => {
     if (!appRef.current) return;
 
@@ -137,6 +242,7 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, [generateStars]);
 
+  // --- Game Logic ---
   const moveSnake = useCallback(() => {
     if (isPaused) return;
 
@@ -207,6 +313,7 @@ function App() {
     audioStarted,
   ]);
 
+  // --- Game Loop Effect ---
   useEffect(() => {
     clearInterval(gameInterval.current);
     if (!gameOver && !isPaused) {
@@ -236,6 +343,7 @@ function App() {
     setGameOver(false);
     setIsPaused(false);
     hasEaten.current = false;
+    setPauseButtonToggle(false);
 
     setHighScore((prevScore) => {
       const updatedHighScore = score > prevScore ? score : prevScore;
@@ -252,19 +360,25 @@ function App() {
     gameInterval.current = setInterval(moveSnake, gameSpeed);
   }, [moveSnake, score, gameSpeed]);
 
+  // --- Input handling ---
+
   const handleKeyDown = useCallback(
     (e) => {
       switch (e.key) {
         case "w":
+        case "ArrowUp":
           changeDirection({ x: 0, y: -1 });
           break;
         case "s":
+        case "ArrowDown":
           changeDirection({ x: 0, y: 1 });
           break;
         case "a":
+        case "ArrowLeft":
           changeDirection({ x: -1, y: 0 });
           break;
         case "d":
+        case "ArrowRight":
           changeDirection({ x: 1, y: 0 });
           break;
         case "Enter":
@@ -274,14 +388,23 @@ function App() {
           if (!audioStarted) {
             startAudioContext();
           } else {
-            setIsPaused((prev) => !prev);
+            if (!gameOver) {
+              setIsPaused((prev) => !prev);
+              setPauseButtonToggle((prev) => !prev);
+            }
           }
           break;
         default:
           break;
       }
     },
-    [changeDirection, gameOver, resetGame, audioStarted, startAudioContext]
+    [
+      changeDirection,
+      gameOver,
+      resetGame,
+      audioStarted,
+      startAudioContext,
+    ]
   );
 
   useEffect(() => {
@@ -289,41 +412,25 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  const SnakeSegment = React.memo(({ isHead, gameOver }) => {
-    const mouthColor = gameOver ? "red" : "white";
-    const mouthStyle = gameOver
-      ? {
-          top: "60%",
-          left: "20%",
-          width: "60%",
-          height: "2px",
-          borderRadius: "0 0 50% 50%",
-          transform: "rotate(180deg)",
-          backgroundColor: mouthColor,
-        }
-      : {
-          top: "60%",
-          left: "20%",
-          width: "60%",
-          height: "2px",
-          borderRadius: "50% 50% 0 0",
-          backgroundColor: mouthColor,
-        };
+  // --- Device Detection ---
+  useEffect(() => {
+    const checkDevice = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-    return (
-      <>
-        <div
-          className="absolute w-1 h-1 rounded-full bg-yellow-300"
-          style={{ top: "20%", left: "20%" }}
-        />
-        <div
-          className="absolute w-1 h-1 rounded-full bg-yellow-300"
-          style={{ top: "20%", right: "20%" }}
-        />
-        <div className="absolute" style={mouthStyle} />
-      </>
-    );
-  });
+      const isTablet = width >= 768 && width < 1024 && height > 400;
+      const isMobile = width < 768 && height > 400;
+
+      setIsDesktop(!(isTablet || isMobile));
+    };
+
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
+
+  // --- Rendering Methods ---
 
   const renderSnakeSegment = useCallback(
     (segment, index) => {
@@ -332,7 +439,11 @@ function App() {
         "w-6 h-6 rounded-md bg-gradient-to-br from-blue-400 to-purple-600";
 
       return (
-        <div key={index} className={baseClass} style={{ position: "relative" }}>
+        <div
+          key={index}
+          className={`${baseClass} relative`}
+          aria-hidden={!isHead}
+        >
           {isHead && <SnakeSegment isHead={true} gameOver={gameOver} />}
         </div>
       );
@@ -340,24 +451,58 @@ function App() {
     [gameOver]
   );
 
+  // --- Pause Handling ---
   const togglePause = useCallback(() => {
-    setIsPaused((prev) => !prev);
-  }, []);
+    if (!gameOver) {
+      setIsPaused((prev) => !prev);
+      setPauseButtonToggle((prev) => !prev);
+    }
+  }, [gameOver]);
 
-  const pauseButtonClasses = `p-2 rounded-full text-white shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+  const pauseButtonClasses = `p-2 rounded-full ${theme.colors.white} shadow-md focus:outline-none focus:ring-2 ${theme.colors.indigo400} ${
     gameOver
-      ? "bg-gray-500 cursor-not-allowed"
-      : "bg-indigo-500 hover:bg-indigo-600"
+      ? `${theme.colors.gray500} cursor-not-allowed`
+      : `${theme.colors.indigo500} hover:${theme.colors.indigo600}`
   }`;
+
+  const gridCells = useMemo(() => {
+    const cells = [];
+    for (let index = 0; index < GRID_SIZE * GRID_SIZE; index++) {
+      const x = index % GRID_SIZE;
+      const y = Math.floor(index / GRID_SIZE);
+      const isSnake = snake.some(
+        (segment) => segment.x === x && segment.y === y
+      );
+      const isFood = food.x === x && food.y === y;
+
+      let cellClass = "w-6 h-6 flex items-center justify-center";
+
+      let content = null;
+
+      if (isSnake) {
+        content = renderSnakeSegment(
+          snake.find((segment) => segment.x === x && segment.y === y),
+          snake.findIndex((segment) => segment.x === x && segment.y === y)
+        );
+      } else if (isFood) {
+        content = <Apple />;
+        cellClass += " items-center justify-center";
+      } else {
+        cellClass += " bg-transparent";
+      }
+
+      cells.push(
+        <div key={index} className={cellClass} role="gridcell">
+          {content}
+        </div>
+      );
+    }
+    return cells;
+  }, [snake, food, renderSnakeSegment]);
 
   return (
     <motion.div
-      className="relative flex flex-col items-center justify-center min-h-screen font-sans text-gray-900 overflow-hidden pt-8"
-      style={{
-        background: "#000428",
-        background: "-webkit-linear-gradient(to bottom, #000428, #004e92)",
-        background: "linear-gradient(to bottom, #000428, #004e92)",
-      }}
+      className="relative flex flex-col items-center justify-center min-h-screen overflow-hidden pt-8 bg-gradient-to-b from-[#000428] to-[#004e92] font-sans text-gray-700"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.75, ease: "easeInOut" }}
@@ -370,43 +515,46 @@ function App() {
       ))}
 
       <motion.h1
-        className="text-4xl md:text-4xl lg:text-6xl font-extrabold mb-4 md:mb-8 text-white tracking-tight drop-shadow-md z-10 flex items-center"
+        className={`text-4xl md:text-4xl lg:text-6xl font-extrabold mb-4 md:mb-8 ${theme.colors.white} tracking-tight drop-shadow-md z-10 flex items-center`}
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
         style={{ textShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)" }}
       >
-        <Worm className="mr-2 text-green-400" size={30} md:size={40} />{" "}
-        <span>Cosmic</span> <span className="text-green-400">Nibbler</span>
+        <Worm
+          className={`mr-2 ${theme.colors.green400}`}
+          size={30}
+          md:size={40}
+        />{" "}
+        <span>Cosmic</span>{" "}
+        <span className={theme.colors.green400}>Nibbler</span>
       </motion.h1>
 
       <motion.div
-        className="mb-4 md:mb-8 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-base md:text-xl font-semibold z-10 flex items-center justify-between"
+        className={`mb-4 md:mb-8 px-4 py-2 rounded-full ${theme.colors.white80} backdrop-blur-sm shadow-lg text-base md:text-xl font-semibold z-10 flex items-center justify-between`}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+        aria-label="Game Status"
       >
         <div>
-          Score: <span className="text-indigo-600">{score}</span> | High Score:{" "}
-          <span className="text-indigo-600">{highScore}</span>
+          Score: <span className={theme.colors.indigo600}>{score}</span> | High
+          Score: <span className={theme.colors.indigo600}>{highScore}</span>
         </div>
-
         <div className="mx-2">
-          | Level: <span className="text-indigo-600">{level}</span>
+          | Level: <span className={theme.colors.indigo600}>{level}</span>
         </div>
-
-        <div className="mx-2"> {/* Added spacing here */} </div>
-
+        <div className="mx-2"></div>
         <button
           className={pauseButtonClasses}
           onClick={togglePause}
           aria-label="Pause Game"
           disabled={gameOver}
         >
-          {isPaused ? (
-            <Play className="w-4 h-4" />
+          {pauseButtonToggle ? (
+            <Play className="w-4 h-4" aria-hidden="true" />
           ) : (
-            <Pause className="w-4 h-4" />
+            <Pause className="w-4 h-4" aria-hidden="true" />
           )}
         </button>
       </motion.div>
@@ -416,8 +564,8 @@ function App() {
           <motion.div
             className={`absolute top-4 left-1/2 transform -translate-x-1/2 p-2 md:p-3 rounded-full shadow-md font-medium z-20 text-sm md:text-base ${
               message === "Level Up!"
-                ? "bg-indigo-200 text-indigo-700"
-                : "text-green-500"
+                ? `${theme.colors.indigo200} ${theme.colors.indigo700}`
+                : theme.colors.green500
             }`}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -432,16 +580,19 @@ function App() {
 
       {isPaused && !gameOver && (
         <motion.div
-          className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-black/70 rounded-2xl z-30"
+          className={`absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center ${theme.colors.black70} rounded-2xl z-30`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
+          aria-label="Game Paused"
         >
-          <div className="text-3xl md:text-4xl font-bold text-white text-shadow-md">
+          <div
+            className={`${theme.colors.white} text-3xl md:text-4xl font-bold text-shadow-md`}
+          >
             Game Paused
           </div>
           <button
-            className="mt-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-2 px-4 md:py-3 md:px-5 rounded-xl focus:outline-none focus:shadow-outline transition-colors duration-300"
+            className={`mt-4 bg-gradient-to-r ${theme.colors.indigo500} ${theme.colors.purple500} hover:${theme.colors.indigo600} hover:${theme.colors.purple600} ${theme.colors.white} font-bold py-2 px-4 md:py-3 md:px-5 rounded-xl focus:outline-none focus:shadow-outline transition-colors duration-300`}
             onClick={togglePause}
             aria-label="Resume Game"
           >
@@ -452,11 +603,10 @@ function App() {
 
       <div className="relative z-10">
         <motion.div
-          className="rounded-2xl shadow-2xl overflow-hidden max-w-md"
+          className="rounded-2xl shadow-2xl overflow-hidden max-w-md mx-4 sm:mx-auto grid bg-opacity-80"
           style={{
             gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(1rem, 1.5rem))`,
             gridTemplateRows: `repeat(${GRID_SIZE}, minmax(1rem, 1.5rem))`,
-            display: "grid",
             backgroundColor: "rgba(52, 73, 94, 0.8)",
           }}
           aria-label="Game Board"
@@ -465,64 +615,31 @@ function App() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
         >
-          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
-            const x = index % GRID_SIZE;
-            const y = Math.floor(index / GRID_SIZE);
-            const isSnake = snake.some(
-              (segment) => segment.x === x && segment.y === y
-            );
-            const isFood = food.x === x && food.y === y;
-
-            let cellClass = "w-6 h-6 flex items-center justify-center";
-
-            if (isSnake) {
-              return (
-                <div key={index} className={cellClass} role="gridcell">
-                  {isSnake &&
-                    renderSnakeSegment(
-                      snake.find(
-                        (segment) => segment.x === x && segment.y === y
-                      ),
-                      snake.findIndex(
-                        (segment) => segment.x === x && segment.y === y
-                      )
-                    )}
-                </div>
-              );
-            } else if (isFood) {
-              cellClass += " items-center justify-center";
-            } else {
-              cellClass += " bg-transparent";
-            }
-
-            return (
-              <div key={index} className={cellClass} role="gridcell">
-                {isFood && <Apple />}
-              </div>
-            );
-          })}
+          {gridCells}
         </motion.div>
 
         {gameOver && (
           <motion.div
-            className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-black/70 rounded-2xl"
+            className={`absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center ${theme.colors.black70} rounded-2xl`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, ease: "easeInOut" }}
+            aria-label="Game Over"
           >
             <div
-              className="text-3xl md:text-4xl font-bold mb-4 flex items-center space-x-2 text-red-500 text-shadow-md"
+              className={`text-3xl md:text-4xl font-bold mb-4 flex items-center space-x-2 ${theme.colors.red500} text-shadow-md`}
               style={{ textShadow: "2px 2px 4px rgba(0, 0, 0, 0.4)" }}
             >
               <Skull
-                className="text-red-600 animate-pulse"
+                className={`${theme.colors.red600} animate-pulse`}
                 size={30}
                 md:size={40}
+                aria-hidden="true"
               />
               Game Over!
             </div>
             <button
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-2 px-4 md:py-3 md:px-5 rounded-xl focus:outline-none focus:shadow-outline transition-colors duration-300"
+              className={`bg-gradient-to-r ${theme.colors.indigo500} ${theme.colors.purple500} hover:${theme.colors.indigo600} hover:${theme.colors.purple600} ${theme.colors.white} font-bold py-2 px-4 md:py-3 md:px-5 rounded-xl focus:outline-none focus:shadow-outline transition-colors duration-300`}
               onClick={resetGame}
               aria-label="Play Again"
               tabIndex="0"
@@ -533,72 +650,69 @@ function App() {
         )}
       </div>
       <div className="mt-4 md:mt-8 z-10 flex flex-col items-center">
-        <div className="hidden md:block text-white mb-4 italic">
+        <div
+          className={`${theme.colors.white} ${
+            isDesktop ? "block" : "hidden"
+          }  mb-4 italic`}
+        >
           <i>
-            Use <b>W</b>, <b>A</b>, <b>S</b>, <b>D</b> keys to move the snake.
-            Press <b>Spacebar</b> to pause/resume.
+            Use <b>W</b>, <b>A</b>, <b>S</b>, <b>D</b> keys to move the snake. Press{" "}
+            <b>Spacebar</b> to pause/resume.
           </i>
         </div>
 
-        <div className="md:hidden flex flex-col items-center">
-          <div className="flex justify-center space-x-4 md:space-x-6">
-            <button
-              className="p-4 md:p-6 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              onClick={() => changeDirection({ x: 0, y: -1 })}
-              aria-label="Move Up"
-            >
-              <ArrowUp className="w-6 h-6 md:w-8 md:h-8" />
-            </button>
+        {!isDesktop && (
+          <div className="flex flex-col items-center w-full">
+            <div className="flex justify-center w-full">
+              <button
+                className={`p-4 md:p-6 rounded-full ${theme.colors.indigo500} hover:${theme.colors.indigo600} ${theme.colors.white} shadow-md focus:outline-none focus:ring-2 ${theme.colors.indigo400}`}
+                onClick={() => changeDirection({ x: 0, y: -1 })}
+                aria-label="Move Up"
+              >
+                <ArrowUp className="w-6 h-6 md:w-8 md:h-8" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="flex justify-center w-full mt-2 md:mt-4">
+              <button
+                className={`p-4 md:p-6 rounded-full ${theme.colors.indigo500} hover:${theme.colors.indigo600} ${theme.colors.white} shadow-md focus:outline-none focus:ring-2 ${theme.colors.indigo400} mr-4`}
+                onClick={() => changeDirection({ x: -1, y: 0 })}
+                aria-label="Move Left"
+              >
+                <ArrowLeft
+                  className="w-6 h-6 md:w-8 md:h-8"
+                  aria-hidden="true"
+                />
+              </button>
+              <button
+                className={`p-4 md:p-6 rounded-full ${theme.colors.indigo500} hover:${theme.colors.indigo600} ${theme.colors.white} shadow-md focus:outline-none focus:ring-2 ${theme.colors.indigo400} ml-4`}
+                onClick={() => changeDirection({ x: 1, y: 0 })}
+                aria-label="Move Right"
+              >
+                <ArrowRight
+                  className="w-6 h-6 md:w-8 md:h-8"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            <div className="flex justify-center w-full mt-2 md:mt-4">
+              <button
+                className={`p-4 md:p-6 rounded-full ${theme.colors.indigo500} hover:${theme.colors.indigo600} ${theme.colors.white} shadow-md focus:outline-none focus:ring-2 ${theme.colors.indigo400}`}
+                onClick={() => changeDirection({ x: 0, y: 1 })}
+                aria-label="Move Down"
+              >
+                <ArrowDown
+                  className="w-6 h-6 md:w-8 md:h-8"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
           </div>
-          <div className="flex justify-center space-x-4 md:space-x-6 mt-2 md:mt-4">
-            <button
-              className="p-4 md:p-6 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              onClick={() => changeDirection({ x: -1, y: 0 })}
-              aria-label="Move Left"
-            >
-              <ArrowLeft className="w-6 h-6 md:w-8 md:h-8" />
-            </button>
-            <button
-              className="p-4 md:p-6 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              onClick={() => changeDirection({ x: 1, y: 0 })}
-              aria-label="Move Right"
-            >
-              <ArrowRight className="w-6 h-6 md:w-8 md:h-8" />
-            </button>
-          </div>
-          <div className="flex justify-center space-x-4 md:space-x-6 mt-2 md:mt-4">
-            <button
-              className="p-4 md:p-6 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              onClick={() => changeDirection({ x: 0, y: 1 })}
-              aria-label="Move Down"
-            >
-              <ArrowDown className="w-6 h-6 md:w-8 md:h-8" />
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </motion.div>
   );
-}
-
-function generateFood(gridSize, snake) {
-  let newFood;
-  do {
-    newFood = {
-      x: Math.floor(Math.random() * gridSize),
-      y: Math.floor(Math.random() * gridSize),
-    };
-  } while (
-    snake.some((segment) => segment.x === newFood.x && segment.y === newFood.y)
-  );
-
-  return newFood;
-}
-
-function checkCollision(head, snake) {
-  return snake
-    .slice(1)
-    .some((segment) => segment.x === head.x && segment.y === head.y);
 }
 
 export default App;
