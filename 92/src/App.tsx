@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
 import * as React from "react";
+import * as Dialog from '@radix-ui/react-dialog';
 
 /**
  * Helper: Format time from milliseconds to MM:SS
@@ -141,14 +142,43 @@ const RaffleEntries: React.FC<RaffleEntriesProps> = ({ entries, entriesRef, hand
               className="flex items-center justify-between p-3 bg-gray-50 rounded-xl shadow-sm border border-gray-200"
             >
               <span className="text-gray-700">{entry}</span>
-              <Button
-                variant="ghost"
-                onClick={() => handleRemoveEntry(entry)}
-                className="text-red-500 hover:text-red-700 transition-colors"
-                aria-label={`Remove ${entry} from raffle`}
-              >
-                <UserMinus className="w-5 h-5" />
-              </Button>
+              <Dialog.Root>
+                <Dialog.Trigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                    aria-label={`Remove ${entry} from raffle`}
+                  >
+                    <UserMinus className="w-5 h-5" />
+                  </Button>
+                </Dialog.Trigger>
+
+                <Dialog.Portal>
+                  <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+                  <Dialog.Content className="fixed bg-white p-6 rounded-xl shadow-lg max-w-sm w-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <Dialog.Title className="text-lg font-semibold mb-2">
+                      Confirm Deletion
+                    </Dialog.Title>
+                    <Dialog.Description className="mb-4 text-sm text-gray-600">
+                      Are you sure you want to remove <span className="font-bold">{entry}</span> from the raffle?
+                    </Dialog.Description>
+                    <div className="flex justify-end gap-3">
+                      <Dialog.Close asChild>
+                        <Button variant="ghost" color="gray">
+                          Cancel
+                        </Button>
+                      </Dialog.Close>
+                      <Dialog.Close asChild>
+                      <Button
+                        onClick={() => handleRemoveEntry(entry)}
+                      >
+                        Confirm
+                      </Button>
+                      </Dialog.Close>
+                    </div>
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
             </li>
           ))}
         </ul>
@@ -213,7 +243,7 @@ const RaffleResetButton: React.FC<RaffleResetButtonProps> = ({ handleResetTimer 
 const RaffleApplication: React.FC = () => {
   // State Management
   const [prize] = useState('A Luxurious Getaway');
-  const [timeRemaining, setTimeRemaining] = useState(10000);
+  const [timeRemaining, setTimeRemaining] = useState(20000);
   const [entries, setEntries] = useState<string[]>([]);
   const [winner, setWinner] = useState<string | null>(null);
   const [timerActive, setTimerActive] = useState(true);
@@ -221,8 +251,8 @@ const RaffleApplication: React.FC = () => {
   const [confettiActive, setConfettiActive] = useState(false); // New state for confetti
 
   // Refs for DOM manipulation and state persistence
-  const winnerRef = useRef<HTMLDivElement>(null);
-  const entriesRef = useRef<HTMLDivElement>(null);
+  const winnerRef = useRef<HTMLDivElement>(null!);
+  const entriesRef = useRef<HTMLDivElement>(null!);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const confettiAnimationId = useRef<number | null>(null);
   const synthRef = useRef<Tone.Synth | null>(null);
@@ -318,6 +348,7 @@ const RaffleApplication: React.FC = () => {
    * Removes a participant from the raffle.
    */
   const handleRemoveEntry = (entryToRemove: string) => {
+    
     setEntries((prev) => prev.filter((entry) => entry !== entryToRemove));
     showNotification(`${entryToRemove} removed from the raffle.`, 'info');
   };
@@ -326,7 +357,7 @@ const RaffleApplication: React.FC = () => {
    * Resets the raffle timer and clears the winner.
    */
   const handleResetTimer = () => {
-    setTimeRemaining(10000);
+    setTimeRemaining(20000);
     setTimerActive(true);
     setWinner(null);
     stopConfetti();
