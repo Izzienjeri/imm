@@ -1,0 +1,563 @@
+/* CSS Variables for Theming (Revised) */
+:root {
+    --bg-color: #f0f4f8;
+    --text-color: #333;
+    --tile-bg: #fff;
+    --tile-revealed: #e9ecef;
+    --tile-border: #ced4da;
+  
+    /* Color Palette - More Subdued and Meaningful */
+    --primary-color: #3498db; /* Primary action/highlight */
+    --secondary-color: #7f8c8d; /* Muted text/secondary elements */
+    --success-color: #27ae60; /* Success/positive feedback */
+    --warning-color: #f39c12; /* Warning/caution */
+    --error-color: #c0392b; /* Error/critical */
+    --info-color: #2980b9; /* Informational */
+    --accent-color: #8e44ad; /* Subtle accents */
+  
+    --flag-color: #e67e22; /* Flag Icon Color - more muted */
+    --mine-color: #e74c3c;
+  
+    --button-bg: var(--primary-color);
+    --button-hover: #2980b9;
+    --button-secondary: var(--secondary-color);
+    --button-secondary-hover: #777;
+  
+    --toast-bg: rgba(0, 0, 0, 0.8);
+    --toast-success: var(--success-color);
+    --toast-error: var(--error-color);
+    --toast-info: var(--info-color);
+  
+    --accessible-orange: #e67e22; /* Accessible Orange Tone (Success) */
+  
+    --neumorphic-shadow-light: rgba(255, 255, 255, 0.7);
+    --neumorphic-shadow-dark: rgba(0, 0, 0, 0.15);
+    --grid-gap: 3px;
+    --focus-outline: 2px solid var(--warning-color); /* Focus outline */
+  }
+  
+  /* General Styles */
+  body {
+    font-family: "Inter", sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .app-container {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 95%;
+    max-width: 600px;
+    text-align: center;
+    transition: background-color 0.3s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-opacity='0.1'%3E%3Crect width='100' height='100' fill='white'/%3E%3Cpath d='M20 0 L0 20 L30 50 L50 30 L80 60 L60 80 L100 100 L80 100 L50 70 L70 50 L40 20 L20 40 L0 60 L20 80 L0 100 L20 100 L50 70 L30 50 L60 20 L80 40 L100 20 L80 0 L60 20 L30 50 L50 30 L20 0 Z' fill='%23e0e5ec'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  /* Top Buttons */
+  #top-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  #top-buttons button {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    color: #777;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 5px;
+    border-radius: 50%;
+  }
+  
+  #top-buttons button:hover {
+    color: #161515;
+  }
+  
+  header,
+  main,
+  footer {
+    margin-bottom: 20px;
+  }
+  
+  h1 {
+    font-family: "Montserrat", sans-serif;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    font-size: 2.8em;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Info Panel */
+  #info-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #ddd;
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    font-size: 1.1em;
+    color: var(--secondary-color);
+  }
+  
+  .info-item i {
+    margin-right: 5px;
+    font-size: 1.2em;
+    color: var(--flag-color);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .info-item span {
+    font-weight: 500;
+    margin-left: 5px;
+    color: #555;
+  }
+  
+  /* Gameboard Styles */
+  #gameboard {
+    display: grid;
+    grid-template-columns: repeat(9, 40px);
+    grid-column-gap: var(--grid-gap);
+    grid-row-gap: var(--grid-gap);
+    margin: 0 auto;
+    justify-content: center;
+  }
+  
+  /* Tile Styling */
+  .tile {
+    width: 40px;
+    height: 40px;
+    background-color: var(--tile-bg);
+    border: 1px solid var(--tile-border);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2em;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-color);
+    box-shadow: 3px 3px 7px var(--neumorphic-shadow-dark),
+      -3px -3px 7px var(--neumorphic-shadow-light);
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.03));
+  }
+  
+  .tile:active,
+  .tile:focus {
+    transform: scale(0.95);
+    box-shadow: inset 3px 3px 7px var(--neumorphic-shadow-dark),
+      inset -3px -3px 7px var(--neumorphic-shadow-light);
+    outline: none;
+  }
+  
+  .tile[tabindex]:focus {
+    outline: var(--focus-outline);
+  }
+  
+  .tile.hidden {
+    background-color: var(--tile-bg);
+  }
+  
+  .tile.revealed {
+    background-color: var(--tile-revealed);
+    border: 1px solid var(--tile-border);
+    box-shadow: none;
+  }
+  
+  /* Numbers */
+  .tile.revealed[data-adjacent-mines="1"] {
+    color: var(--primary-color);
+  }
+  
+  .tile.revealed[data-adjacent-mines="2"] {
+    color: var(--secondary-color);
+  }
+  
+  .tile.revealed[data-adjacent-mines="3"] {
+    color: var(--error-color);
+  }
+  
+  .tile.revealed[data-adjacent-mines="4"] {
+    color: var(--accent-color);
+  }
+  
+  /* You can define more numbers if needed, or just reuse the existing colors */
+  .tile.revealed[data-adjacent-mines="5"] {
+    color: var(--primary-color);
+  }
+  
+  .tile.revealed[data-adjacent-mines="6"] {
+    color: var(--success-color);
+  }
+  
+  .tile.revealed[data-adjacent-mines="7"] {
+    color: var(--warning-color);
+  }
+  
+  .tile.revealed[data-adjacent-mines="8"] {
+    color: var(--error-color);
+  }
+  
+  .tile.flagged {
+    background-color: var(--flag-color);
+    color: var(--text-color);
+  }
+  
+  .tile.mine {
+    background-color: var(--mine-color);
+    color: var(--tile-bg);
+  }
+  
+  .tile.mine i {
+    color: var(--tile-bg);
+  }
+  
+  /* Button Styles */
+  #reset-button,
+  #mute-button,
+  #instructions-button,
+  .modal-buttons button {
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background 0.3s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 3px 3px 7px var(--neumorphic-shadow-dark),
+      -3px -3px 7px var(--neumorphic-shadow-light);
+  }
+  
+  #reset-button:hover,
+  .modal-buttons button:hover {
+    background-color: var(--button-hover);
+  }
+  
+  #reset-button:active,
+  .modal-buttons button:active {
+    transform: scale(0.95);
+    box-shadow: inset 3px 3px 7px var(--neumorphic-shadow-dark),
+      inset -3px -3px 7px var(--neumorphic-shadow-light);
+  }
+  
+  #reset-button i,
+  #mute-button i,
+  #instructions-button i {
+    margin-right: 5px;
+  }
+  
+  /* Toast Styles */
+  #toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 1000;
+  }
+  
+  .toast {
+    background-color: var(--toast-bg);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: toastFade 3s forwards ease-in-out;
+  }
+  
+  .toast.success {
+    background-color: var(--toast-success);
+  }
+  
+  .toast.error {
+    background-color: var(--toast-error);
+  }
+  
+  .toast.info {
+    background-color: var(--toast-info);
+  }
+  
+  @keyframes toastFade {
+    0% {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    10% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    90% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+  }
+  
+  /* Instructions Modal (Revised) */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .modal.open {
+    display: block;
+    opacity: 1;
+  }
+  
+  .modal-content {
+    background-color: var(--tile-revealed);
+    margin: 8% auto;
+    padding: 30px;
+    border: 1px solid var(--tile-border);
+    max-width: 650px;
+    border-radius: 12px;
+    position: relative;
+    color: var(--text-color);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.3s ease;
+  }
+  
+  .modal-content h3#instructionsModalLabel {
+    font-family: "Montserrat", sans-serif;
+    margin-bottom: 20px;
+    font-size: 2.1em;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    color: var(--info-color);
+    text-align: center;
+  }
+  
+  .modal-content p {
+    font-size: 1.05em; /* Reduced paragraph size */
+    line-height: 1.55; /* Adjust line height */
+    margin-bottom: 15px;
+    color: var(--secondary-color); /* Secondary color for body text */
+  }
+  
+  .modal-content strong {
+    color: var(--primary-color); /* Use primary color for key terms */
+    font-weight: 600;
+  }
+  
+  /* Accessible Orange for Objective */
+  .modal-content p.objective {
+    color: var(--accessible-orange);
+  }
+  
+  .modal-content i {
+    color: var(--flag-color); /* Muted flag color */
+    margin-right: 5px;
+  }
+  
+  .modal-content ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 1rem;
+    text-align: left;
+  }
+  
+  .modal-content li {
+    margin-bottom: 12px;
+    color: var(--text-color);
+  }
+  
+  .modal-content li::before {
+    content: "\f058";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: var(--success-color);
+    font-size: 0.9em;
+    width: 12px;
+    text-align: center;
+    display: inline-block;
+    margin-right: 8px;
+  }
+  
+  .close {
+    color: var(--text-color);
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    transition: color 0.2s ease;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: var(--button-bg);
+    text-decoration: none;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  /* Confirmation Dialog (Reset Confirmation) */
+  .confirmation-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--tile-revealed);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    z-index: 1000;
+    width: 80%;
+    max-width: 300px;
+  }
+  
+  .confirmation-dialog .button-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    width: 100%;
+    flex-direction: row;
+  }
+  
+  .confirmation-dialog button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    flex: 1;
+    margin: 0 5px;
+  }
+  
+  .confirmation-dialog button.confirm {
+    background-color: var(--button-bg);
+    color: white;
+  }
+  
+  .confirmation-dialog button.cancel {
+    background-color: var(--button-secondary);
+    color: white;
+  }
+  
+  .confirmation-dialog button.confirm:hover {
+    background-color: var(--button-hover);
+  }
+  
+  .confirmation-dialog button.cancel:hover {
+    background-color: var(--button-secondary-hover);
+  }
+  
+  /* Media Queries */
+  @media (max-width: 768px) {
+    .app-container {
+      width: 95%;
+      padding: 15px;
+    }
+  
+    #top-buttons {
+      justify-content: center;
+    }
+  
+    h1 {
+      font-size: 2em;
+    }
+  
+    #info-panel {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .info-item {
+      margin-bottom: 10px;
+    }
+  
+    #gameboard {
+      grid-template-columns: repeat(9, 30px);
+    }
+  
+    .tile {
+      width: 30px;
+      height: 30px;
+      font-size: 0.9em;
+    }
+  
+    #reset-button,
+    #top-buttons button {
+      font-size: 0.9em;
+      padding: 8px 12px;
+    }
+  
+    .modal-content {
+      margin: 10% auto;
+      padding: 20px;
+    }
+  
+    .modal-content h3#instructionsModalLabel {
+      font-size: 1.8em;
+    }
+  
+    .modal-content p,
+    .modal-content li {
+      font-size: 1em;
+    }
+  }
+  
+  /* Modal Button Styling */
+  .modal-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+  
+  .modal-buttons button {
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+  }
+  
+  .modal-buttons button#cancel-reset-button {
+    background-color: var(--button-secondary);
+  }
+  
+  .modal-buttons button#cancel-reset-button:hover {
+    background-color: var(--button-secondary-hover);
+  }
